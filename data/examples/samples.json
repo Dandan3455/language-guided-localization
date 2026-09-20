@@ -1,0 +1,10 @@
+[
+  {
+    "sample_id": "simulated_scene_001",
+    "image_path": "data/examples/scene.png",
+    "description": "找到笔记本左边的杯子。",
+    "ground_truth_box": [100, 170, 200, 290],
+    "prediction_box": [125, 185, 225, 305],
+    "prediction_source": "simulated"
+  }
+]
