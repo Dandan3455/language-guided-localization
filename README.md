@@ -10,6 +10,30 @@
 
 ## Windows 真实模型入门
 
+### 鼠标标注正确框
+
+在 Windows 文件资源管理器中双击项目根目录的 `annotate.html`，用浏览器打开（无需安装依赖或启动服务器）。默认显示 `data/downloads/desk.png`；如果未显示，点击“选择其他图片”选择原图。
+
+1. 确认图片路径和描述。在原图上按住鼠标左键拖出矩形，框住笔记本左边的完整杯子，包含杯柄。
+2. 松开后显示原图像素坐标 `[x_min, y_min, x_max, y_max]`。可反向拖动或重新拖框；页面缩放不改变坐标含义。
+3. 点击“下载标注 JSON”，把下载的文件放到项目 `data/annotations/`。默认文件名为 `desk_left_cup_001.json`。
+
+页面只显示原图，不显示模型预测。导出的 JSON 是样本列表，包含图片路径、描述、人工正确框、原图尺寸和 `annotation_source: "manual"`，不包含预测框。更换图片后，请确认路径确实指向项目里的对应图片。
+
+### 对一个真实样本评分
+
+将标注放到 `data/annotations/desk_left_cup_001.json`，并确认 `outputs/detection/results.json` 是同一张 `desk.png` 的预测后运行：
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py
+```
+
+该入口按固定规则选择标签包含完整单词 `cup` 的最高分候选（同分取第一个），不使用正确框选候选。然后复用 `evaluation.py` 和 `visualization.py` 计算 IoU、生成对比图。默认文件保存到 `outputs/evaluation/desk_left_cup_001_result.png` 和 `desk_left_cup_001_evaluation.json`，JSON 保留完整标注、预测来源和选框规则。没有目标候选时记录空预测、IoU 0 和失败，不伪造框，也不生成新的对比图。可通过 `--annotation`、`--prediction` 和 `--target` 指定输入。
+
+这是开发样本的端到端检查，不是数据集准确率，也不能证明模型理解了左右关系。当前用户标注与最高分杯子框的 IoU 约为 0.907574。
+
+### 安装和运行模型
+
 使用 Python 3.12，模型为 `IDEA-Research/grounding-dino-tiny`，通过 Transformers 接入。本机安装组合为 PyTorch 2.6.0 / torchvision 0.21.0（CUDA 12.4）和 Transformers 4.51.3；其他电脑应根据驱动选择 PyTorch 安装包。
 
 在项目根目录的 PowerShell 中依次执行（已经安装后不必重复）：

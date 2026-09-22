@@ -1,0 +1,16 @@
+[
+  {
+    "sample_id": "desk_left_cup_001",
+    "image_path": "data/downloads/desk.png",
+    "description": "找到笔记本左边的杯子。",
+    "ground_truth_box": [
+      152,
+      297,
+      241,
+      377
+    ],
+    "annotation_source": "manual",
+    "image_width": 781,
+    "image_height": 516
+  }
+]
