@@ -1,0 +1,5 @@
+-r requirements.txt
+# Install GPU PyTorch separately; see README.md.
+torch==2.6.0
+torchvision==0.21.0
+transformers==4.51.3

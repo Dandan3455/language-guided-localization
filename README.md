@@ -4,9 +4,39 @@
 
 ## 当前完成范围
 
-已实现主项目的 **IoU 评估与可视化模块**。图片是 Pillow 绘制的示意图，真实框和预测框都是手动坐标，JSON 使用 `prediction_source: "simulated"`。**当前程序没有理解文字或检测物体，结果不代表任何模型性能。** 描述目前只被读取、保留和打印。
+已实现主项目的 **IoU 评估与可视化模块**。`run_example.py` 使用 Pillow 绘制的示意图，真实框和预测框都是手动坐标，JSON 使用 `prediction_source: "simulated"`。**这个模拟示例没有理解文字或检测物体，结果不代表任何模型性能。** 描述在模拟示例中只被读取、保留和打印。
 
-尚未实现模型接入、真实数据基线、失败类型标注和关系重排序。没有安装 PyTorch 或 Grounding DINO，没有下载模型权重或大型数据集。
+另有 `run_detection.py` 用于接入 Grounding DINO Tiny，对单张真实图片输出全部候选框和分数。它不选择最终目标，不计算数据集准确率。尚未实现真实数据基线、失败类型标注和关系重排序。
+
+## Windows 真实模型入门
+
+使用 Python 3.12，模型为 `IDEA-Research/grounding-dino-tiny`，通过 Transformers 接入。本机安装组合为 PyTorch 2.6.0 / torchvision 0.21.0（CUDA 12.4）和 Transformers 4.51.3；其他电脑应根据驱动选择 PyTorch 安装包。
+
+在项目根目录的 PowerShell 中依次执行（已经安装后不必重复）：
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+.\.venv\Scripts\python.exe -m pip install --no-cache-dir -r requirements-model.txt
+```
+
+用自己的照片运行：
+
+```powershell
+.\.venv\Scripts\python.exe run_detection.py --image "D:\photos\desk.jpg" --text "a cup. a laptop."
+```
+
+`--image` 是照片路径，`--text` 是英文提示词。首次运行自动下载权重到项目的 `models/huggingface/`，以后复用缓存。结果为 `outputs/detection/result.png` 和 `outputs/detection/results.json`，再次运行会覆盖它们。JSON 保存候选框、分数、提示词、模型版本和阈值；没有候选时如实记录。框是未裁剪的原图像素 xyxy 坐标。
+
+测试照片来自 [Transformers 官方教程](https://huggingface.co/docs/transformers/v4.51.3/model_doc/grounding-dino) 使用的 COCO 图片 `000000039769.jpg`，本地路径为 `data/downloads/cats.jpg`（不提交 Git）。下载后可运行：
+
+```powershell
+.\.venv\Scripts\python.exe run_detection.py --image data/downloads/cats.jpg
+```
+
+此演示只验证模型能运行，不评估空间关系或定位准确率；正式实验仍需固定标注数据和选框规则。安装来源：[PyTorch 官方版本说明](https://docs.pytorch.org/get-started/previous-versions/)。
+
+本机已完成 CUDA 推理验证：上述照片在默认阈值下输出两只猫和一个遥控器，共 3 个候选框。依赖检查和原有评估断言通过。Windows 终端若输出中文报 `UnicodeEncodeError`，在命令的 `python.exe` 后添加 `-X utf8`。
 
 ## 文件结构
 
