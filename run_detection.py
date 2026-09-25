@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from src.run_paths import create_run_directory
 
 ROOT = Path(__file__).resolve().parent
 
@@ -12,9 +13,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True, type=Path)
     parser.add_argument("--text", default="a cat. a remote control.")
+    parser.add_argument("--run-name", help="Experiment name, e.g. desk_left; omit for an automatic unique name")
     args = parser.parse_args()
     if not args.image.is_file():
         parser.error(f"Image does not exist: {args.image}")
+    if not args.text.strip():
+        parser.error("Text must not be empty")
+    try:
+        destination = create_run_directory(ROOT / "outputs" / "detection", args.run_name)
+    except (ValueError, FileExistsError) as exc:
+        parser.error(f"{exc}. Choose a new --run-name; existing results are never overwritten.")
+    print(f"Experiment: {destination.name}\nPrompt: {args.text}\nOutput: {destination}", flush=True)
 
     os.environ.setdefault("HF_HOME", str(ROOT / "models" / "hf-home"))
     import torch
@@ -44,9 +53,8 @@ def main():
         {"box": box.tolist(), "score": score.item(), "label": str(label)}
         for box, score, label in zip(result["boxes"].cpu(), result["scores"].cpu(), labels)
     ]
-    destination = ROOT / "outputs" / "detection"
-    destination.mkdir(parents=True, exist_ok=True)
     record = {
+        "run_name": destination.name,
         "image_path": str(args.image.resolve()), "prompt": args.text,
         "prediction_source": "model", "model_id": model_id,
         "model_revision": getattr(model.config, "_commit_hash", None),

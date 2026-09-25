@@ -9,6 +9,7 @@ from pathlib import Path
 from PIL import Image
 from src.evaluation import evaluate_boxes, validate_box
 from src.visualization import draw_result
+from src.run_paths import create_run_directory
 
 ROOT = Path(__file__).resolve().parent
 
@@ -31,7 +32,8 @@ def select_candidate(candidates, target):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--annotation", type=Path, default=ROOT / "data/annotations/desk_left_cup_001.json")
-    parser.add_argument("--prediction", type=Path, default=ROOT / "outputs/detection/results.json")
+    parser.add_argument("--prediction", type=Path, required=True,
+                        help="Explicit results.json from the experiment to evaluate")
     parser.add_argument("--target", default="cup")
     args = parser.parse_args()
     if not args.target.strip():
@@ -58,10 +60,10 @@ def main():
     metrics = evaluate_boxes(gt, selected["box"]) if selected else {
         "iou": 0.0, "is_correct": False, "criterion": "IoU > 0.5"
     }
-    output = ROOT / "outputs" / "evaluation"
-    output.mkdir(parents=True, exist_ok=True)
+    output = create_run_directory(ROOT / "outputs" / "evaluation")
     safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", sample["sample_id"])
     result = {
+        "prediction_file": str(args.prediction.resolve()),
         "annotation": sample, "prediction_run": prediction,
         "selection_rule": "highest score among labels containing target words; first on ties",
         "target": args.target, "selected_candidate": selected,

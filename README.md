@@ -61,28 +61,38 @@ Query 是模型收到的文字，可以用 `--text` 修改；标注文件中的�
 已安装依赖后，在项目根目录运行：
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 run_detection.py --image data/downloads/desk.png --text "the cup to the left of the laptop."
+.\.venv\Scripts\python.exe -X utf8 run_detection.py --image data/downloads/desk.png --text "the cup to the left of the laptop." --run-name desk_left
 ```
 
 该命令要求找笔记本左边的杯子。将 `left` 改成 `right` 可改变要求。**不传 `--text` 时，程序默认找 `a cat. a remote control.`，不是左边的杯子。** 首次安装方法见后文。
 
-打开 `outputs/detection/result.png` 查看所有候选框；`outputs/detection/results.json` 保存完整候选、分数和实际 prompt。再次运行会覆盖这些文件，做 query 对照实验前应将每次结果另存到独立目录。
+打开 `outputs/detection/desk_left/result.png` 查看所有候选框；同目录的 `results.json` 保存完整候选、分数和实际 prompt。`--run-name` 指定实验名，只接受英文字母、数字、下划线和连字符，首字符为字母或数字，最长 80 字符，不使用 Windows 保留设备名。已有目录会被拒绝，不会覆盖；再次实验可命名为 `desk_left_02`。省略该参数时自动生成带 UTC 时间和随机后缀的独立目录。启动后会打印实际保存路径；失败的运行可能留下空目录，重试时使用新名字。
+
+右侧对照实验使用另一个名字：
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 run_detection.py --image data/downloads/desk.png --text "the cup to the right of the laptop." --run-name desk_right
+```
+
+两个实验分别保存，不会互相覆盖。Query 直接在命令的 `--text` 后填写，无需修改 Python 代码。
 
 ### 3. 对一个真实样本评分
 
-将标注放到 `data/annotations/desk_left_cup_001.json`，并确认 `outputs/detection/results.json` 是同一张 `desk.png` 的预测后运行：
+将标注放到 `data/annotations/desk_left_cup_001.json`，并明确指定左侧实验的预测文件：
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py
+.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py --prediction outputs/detection/desk_left/results.json
 ```
 
-该入口按固定规则选择标签包含完整单词 `cup` 的最高分候选（同分取第一个），不使用正确框选候选。然后复用 `evaluation.py` 和 `visualization.py` 计算 IoU、生成对比图。默认文件保存到 `outputs/evaluation/desk_left_cup_001_result.png` 和 `desk_left_cup_001_evaluation.json`，JSON 保留完整标注、预测来源和选框规则。没有目标候选时记录空预测、IoU 0 和失败，不伪造框，也不生成新的对比图。可通过 `--annotation`、`--prediction` 和 `--target` 指定输入。
+该入口按固定规则选择标签包含完整单词 `cup` 的最高分候选（同分取第一个），不使用正确框选候选。然后复用 `evaluation.py` 和 `visualization.py` 计算 IoU、生成对比图。每次评分保存到新的 `outputs/evaluation/run_<时间和随机后缀>/` 目录，终端打印完整路径，其中包含 `<sample_id>_result.png` 和 `<sample_id>_evaluation.json`。JSON 保留预测文件路径、完整标注、预测来源和选框规则。没有目标候选时记录空预测、IoU 0 和失败，不伪造框，也不生成对比图。
+
+`--prediction` 现在为必填参数，不自动猜测最新实验。历史的 `outputs/detection/results.json` 仍可显式传入。`--annotation` 默认使用左杯标注；评估右杯时必须传入对应的右杯标注，不能沿用默认答案。`--target` 默认是 `cup`。
 
 这是开发样本的端到端检查，不是数据集准确率，也不能证明模型理解了左右关系。当前用户标注与最高分杯子框的 IoU 约为 0.907574。
 
 当前人工正确框为 `[152, 297, 241, 377]`，选中预测框约为 `[150.616, 293.811, 238.738, 375.578]`，该候选的置信分数约为 0.568。绿色显示人工框，红色显示预测框。
 
-评分程序只读取已保存的预测，不重新运行模型。它检查图片路径和尺寸，但不会自动确认中文描述与英文 prompt 的语义一致，操作者需确认两者指定同一目标。当前每次只支持一个标注样本。没有候选时不生成新图片，旧同名图片可能仍存在，应以本次 JSON 的 `visualization_path` 为准。
+评分程序只读取已保存的预测，不重新运行模型。它检查图片路径和尺寸，但不会自动确认中文描述与英文 prompt 的语义一致，操作者需确认两者指定同一目标。当前每次只支持一个标注样本；无目标候选时 JSON 的 `visualization_path` 为 null。
 
 ### 安装和运行模型
 
@@ -102,7 +112,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe run_detection.py --image "D:\photos\desk.jpg" --text "a cup. a laptop."
 ```
 
-`--image` 是照片路径，`--text` 是英文提示词。首次运行自动下载权重到项目的 `models/huggingface/`，以后复用缓存。结果为 `outputs/detection/result.png` 和 `outputs/detection/results.json`，再次运行会覆盖它们。JSON 保存候选框、分数、提示词、模型版本和阈值；没有候选时如实记录。框是未裁剪的原图像素 xyxy 坐标。
+`--image` 是照片路径，`--text` 是英文提示词，`--run-name` 是可选实验名。首次运行自动下载权重到项目的 `models/huggingface/`，以后复用缓存。每次结果保存到独立的 `outputs/detection/<实验名>/` 目录，不覆盖旧实验。JSON 保存实验名、候选框、分数、提示词、模型版本和阈值；没有候选时如实记录。框是未裁剪的原图像素 xyxy 坐标。
 
 测试照片来自 [Transformers 官方教程](https://huggingface.co/docs/transformers/v4.51.3/model_doc/grounding-dino) 使用的 COCO 图片 `000000039769.jpg`，本地路径为 `data/downloads/cats.jpg`（不提交 Git）。下载后可运行：
 
@@ -121,6 +131,7 @@ src/
   __init__.py
   evaluation.py          # 验证坐标、计算面积与 IoU，包含少量断言
   visualization.py       # 画框、图例和指标
+  run_paths.py           # 创建独立实验目录，防止覆盖
 data/examples/
   scene.png              # 小型示意图，需要保留在 Git 中
   samples.json           # 描述、真实框、模拟预测框、来源
