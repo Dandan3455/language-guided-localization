@@ -1,41 +1,41 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>杯子位置标注</title>
+<title>Cup Bounding Box Annotation</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:#172b3a;font:16px/1.6 system-ui,sans-serif}main{max-width:1000px;margin:28px auto;padding:0 20px}h1{font-size:26px;margin:0}p{margin:8px 0 18px}.panel{background:white;border:1px solid #d9e1e8;border-radius:14px;padding:20px;margin:18px 0}.row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}label{display:block}input[type=text]{display:block;width:100%;padding:9px;border:1px solid #aab9c5;border-radius:6px;font:inherit}.field{flex:1;min-width:240px}button{font:inherit;padding:10px 18px;border-radius:8px;border:1px solid #9baebd;background:white;cursor:pointer}button.primary{background:#1466c2;color:white;border-color:#1466c2}button:disabled{opacity:.45;cursor:not-allowed}#stage{position:relative;line-height:0;max-width:100%;margin:auto;user-select:none;touch-action:none;cursor:crosshair}#photo{display:block;width:100%;height:auto;pointer-events:none}#box{position:absolute;border:3px solid #078044;background:#07804422;pointer-events:none;display:none}#coords{font:22px ui-monospace,monospace;color:#07673c}#status{min-height:26px}small{color:#536575}input[type=file]{max-width:100%}
 </style>
 <main>
-<h1>给图片标出正确答案</h1>
-<p>在原图上按住鼠标左键拖出矩形，框住<strong>笔记本左边的杯子（包含杯柄）</strong>。松开完成，重新拖动可重画。</p>
+<h1>Annotate the Ground Truth</h1>
+<p>Hold the left mouse button and drag a rectangle around <strong>the cup to the left of the laptop, including its handle</strong>. Release to finish; drag again to redraw.</p>
 <section class="panel">
-<div class="row"><label class="field">图片在项目中的路径<input id="path" type="text" value="data/downloads/desk.png"></label><label class="field">选择其他图片（可选）<input id="file" type="file" accept="image/*"></label></div>
-<label style="margin-top:12px">描述<input id="description" type="text" value="找到笔记本左边的杯子。"></label>
-<small>坐标会自动换算到原图尺寸；缩放页面不会改变标注。图片只在本机处理。</small>
+<div class="row"><label class="field">Image path within the project<input id="path" type="text" value="data/downloads/desk.png"></label><label class="field">Choose another image (optional)<input id="file" type="file" accept="image/*"></label></div>
+<label style="margin-top:12px">Description<input id="description" type="text" value="Find the cup to the left of the laptop."></label>
+<small>Coordinates use the original image size and remain unchanged when zooming the page. Images are processed locally.</small>
 </section>
-<section class="panel"><div id="stage"><img id="photo" alt="待标注的原图" draggable="false"><div id="box"></div></div><p id="status" role="status" aria-live="polite">正在打开原图…</p></section>
-<section class="panel"><div>正确框坐标：[左边 x，上边 y，右边 x，下边 y]</div><div id="coords">尚未标注</div><div class="row" style="margin-top:14px"><button id="reset" type="button">重新标注</button><button id="save" class="primary" type="button" disabled>下载标注 JSON</button></div><small>下载后请放到项目的 data/annotations/ 文件夹。文件中只保存人工正确框，不包含模型预测。</small></section>
+<section class="panel"><div id="stage"><img id="photo" alt="Original image for annotation" draggable="false"><div id="box"></div></div><p id="status" role="status" aria-live="polite">Loading the original image...</p></section>
+<section class="panel"><div>Ground truth box: [left x, top y, right x, bottom y]</div><div id="coords">No annotation yet</div><div class="row" style="margin-top:14px"><button id="reset" type="button">Redraw</button><button id="save" class="primary" type="button" disabled>Download annotation JSON</button></div><small>Move the downloaded file into the project data/annotations/ folder. It contains only manual ground truth, not model predictions.</small></section>
 </main>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
 const photo=$('photo'),stage=$('stage'),overlay=$('box');
 let start=null, selection=null, activePointer=null, ready=false, localURL=null;
-function clearSelection(){start=null;selection=null;activePointer=null;overlay.style.display='none';$('coords').textContent='尚未标注';$('save').disabled=true;}
+function clearSelection(){start=null;selection=null;activePointer=null;overlay.style.display='none';$('coords').textContent='No annotation yet';$('save').disabled=true;}
 function point(event){const r=stage.getBoundingClientRect();return [Math.round(Math.max(0,Math.min(1,(event.clientX-r.left)/r.width))*photo.naturalWidth),Math.round(Math.max(0,Math.min(1,(event.clientY-r.top)/r.height))*photo.naturalHeight)];}
 function rectangle(a,b){return [Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])];}
 function render(){if(!selection)return;const [x1,y1,x2,y2]=selection;Object.assign(overlay.style,{display:'block',left:100*x1/photo.naturalWidth+'%',top:100*y1/photo.naturalHeight+'%',width:100*(x2-x1)/photo.naturalWidth+'%',height:100*(y2-y1)/photo.naturalHeight+'%'});$('coords').textContent=JSON.stringify(selection);}
-photo.onload=()=>{ready=true;clearSelection();stage.style.width=photo.naturalWidth+'px';stage.style.maxWidth='100%';$('status').textContent=`原图 ${photo.naturalWidth} × ${photo.naturalHeight} 像素。请拖框标注。`;};
-photo.onerror=()=>{ready=false;clearSelection();$('status').textContent='无法打开图片，请点击“选择其他图片”选择 desk.png。';};
+photo.onload=()=>{ready=true;clearSelection();stage.style.width=photo.naturalWidth+'px';stage.style.maxWidth='100%';$('status').textContent=`Original image: ${photo.naturalWidth} × ${photo.naturalHeight} pixels. Drag to annotate.`;};
+photo.onerror=()=>{ready=false;clearSelection();$('status').textContent='Unable to load the image. Use the image picker to select desk.png.';};
 function loadImage(url){ready=false;clearSelection();photo.src=url;}
 loadImage('data/downloads/desk.png');
 $('file').onchange=event=>{const file=event.target.files[0];if(!file)return;if(localURL)URL.revokeObjectURL(localURL);localURL=URL.createObjectURL(file);$('path').value='data/downloads/'+file.name;loadImage(localURL);};
 stage.onpointerdown=event=>{if(!ready||event.button!==0||activePointer!==null)return;event.preventDefault();$('save').disabled=true;activePointer=event.pointerId;start=point(event);selection=rectangle(start,start);stage.setPointerCapture(event.pointerId);render();};
 stage.onpointermove=event=>{if(event.pointerId!==activePointer)return;selection=rectangle(start,point(event));render();};
-stage.onpointerup=event=>{if(event.pointerId!==activePointer)return;selection=rectangle(start,point(event));stage.releasePointerCapture(event.pointerId);start=null;activePointer=null;if(selection[2]-selection[0]<2||selection[3]-selection[1]<2){clearSelection();$('status').textContent='框太小了，请按住鼠标拖出矩形。';return;}render();$('save').disabled=false;$('status').textContent='标注完成。检查是否包含完整杯子和杯柄，然后下载；也可以重新拖框。';};
-stage.onpointercancel=()=>{clearSelection();$('status').textContent='拖动已取消，请重新标注。';};
-$('reset').onclick=()=>{clearSelection();$('status').textContent='请重新拖框标注。';};
-$('save').onclick=()=>{if(!selection||activePointer!==null)return;const imagePath=$('path').value.trim().replaceAll('\\','/'), description=$('description').value.trim();if(!imagePath||!description){$('status').textContent='请填写图片路径和描述。';return;}const id=(imagePath.split('/').pop().replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]/g,'_')||'image')+'_left_cup_001';const record=[{sample_id:id,image_path:imagePath,description,ground_truth_box:selection.slice(),annotation_source:'manual',image_width:photo.naturalWidth,image_height:photo.naturalHeight}];const url=URL.createObjectURL(new Blob([JSON.stringify(record,null,2)+'\n'],{type:'application/json;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=id+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('status').textContent='已发起下载。请在浏览器下载列表中找到 JSON，放到项目 data/annotations/ 文件夹。';};
+stage.onpointerup=event=>{if(event.pointerId!==activePointer)return;selection=rectangle(start,point(event));stage.releasePointerCapture(event.pointerId);start=null;activePointer=null;if(selection[2]-selection[0]<2||selection[3]-selection[1]<2){clearSelection();$('status').textContent='The box is too small. Hold the mouse button and drag a rectangle.';return;}render();$('save').disabled=false;$('status').textContent='Annotation complete. Check that the box includes the cup and handle, then download or drag again to redraw.';};
+stage.onpointercancel=()=>{clearSelection();$('status').textContent='Drag canceled. Please try again.';};
+$('reset').onclick=()=>{clearSelection();$('status').textContent='Drag a new annotation box.';};
+$('save').onclick=()=>{if(!selection||activePointer!==null)return;const imagePath=$('path').value.trim().replaceAll('\\','/'), description=$('description').value.trim();if(!imagePath||!description){$('status').textContent='Please enter the image path and description.';return;}const id=(imagePath.split('/').pop().replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]/g,'_')||'image')+'_left_cup_001';const record=[{sample_id:id,image_path:imagePath,description,ground_truth_box:selection.slice(),annotation_source:'manual',image_width:photo.naturalWidth,image_height:photo.naturalHeight}];const url=URL.createObjectURL(new Blob([JSON.stringify(record,null,2)+'\n'],{type:'application/json;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=id+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('status').textContent='Download requested. Find the JSON in your browser downloads and move it into the project data/annotations/ folder.';};
 </script>
 </html>

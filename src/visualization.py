@@ -1,4 +1,4 @@
-"""Pillow 绘图；显示时将原图下移，为图例预留独立空间。"""
+"""Draw with Pillow, shifting the displayed image down to leave space for a legend."""
 
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -7,11 +7,11 @@ from .evaluation import validate_box
 
 def draw_result(image_path, ground_truth_box, prediction_box, metrics,
                 output_path, prediction_source):
-    """保存带框图片；坐标始终相对于原图，不改变评估用坐标。"""
+    """Save an annotated image without changing the original-image coordinates used for evaluation."""
     gt = validate_box(ground_truth_box)
     pred = validate_box(prediction_box)
     if prediction_source not in ("simulated", "model"):
-        raise ValueError("prediction_source 必须是 simulated 或 model")
+        raise ValueError("prediction_source must be simulated or model")
     with Image.open(image_path) as original:
         scene = original.convert("RGB")
     header = 140

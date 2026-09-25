@@ -1,4 +1,4 @@
-# 基础依赖：模拟示例、图片绘制和 IoU 评分使用。
-# 运行真实模型时，requirements-model.txt 会自动包含本文件。
-# Pillow：打开、处理图片并画框。
+# Base dependencies for the simulated example, visualization, and IoU evaluation.
+# requirements-model.txt includes this file for real model inference.
+# Pillow: open and process images, and draw bounding boxes.
 Pillow==11.3.0

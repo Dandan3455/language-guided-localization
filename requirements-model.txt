@@ -1,14 +1,14 @@
-# 真实模型的完整依赖清单；不是第二份模型权重。
-# 第一步：按 README 安装指定 CUDA 版本的 torch 和 torchvision。
-# 第二步：用项目 Python 执行 -m pip install -r requirements-model.txt。
-# 已满足版本要求的依赖通常不会重复安装。
+# Full dependency list for model inference; this is not a model weights file.
+# Step 1: install torch and torchvision for the CUDA version specified in README.md.
+# Step 2: use the project Python to run -m pip install -r requirements-model.txt.
+# Installed dependencies satisfying the version requirements are normally reused.
 
-# 同时安装基础清单中的依赖（目前是 Pillow）。
+# Include the base dependencies (currently Pillow).
 -r requirements.txt
 
-# PyTorch：模型计算；torchvision：配套视觉工具。
+# PyTorch: model computation; torchvision: companion vision utilities.
 torch==2.6.0
 torchvision==0.21.0
 
-# Transformers：加载、预处理并调用 Grounding DINO。
+# Transformers: load Grounding DINO, preprocess inputs, and run inference.
 transformers==4.51.3

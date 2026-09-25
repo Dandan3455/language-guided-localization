@@ -1,4 +1,4 @@
-"""读取主项目示例，评估手动预测框并保存结果。"""
+"""Load example data, evaluate manually specified prediction boxes, and save results."""
 
 import json
 from pathlib import Path
@@ -20,17 +20,17 @@ def main():
                     output, sample["prediction_source"])
         result = {**sample, **metrics, "visualization_path": output.relative_to(ROOT).as_posix()}
         results.append(result)
-        print(f"\n样本：{sample['sample_id']} | 来源：{sample['prediction_source']}")
-        print(f"描述：{sample['description']}")
-        print(f"真实框：{gt}\n预测框：{pred}")
-        print(f"真实框面积：{metrics['ground_truth_area']} | 预测框面积：{metrics['prediction_area']}")
-        print(f"交集：{metrics['intersection_area']} | 并集：{metrics['union_area']}")
-        print(f"IoU：{metrics['iou']:.9f} | 定位正确：{metrics['is_correct']} (IoU > 0.5)")
-        print(f"结果图片：{output}")
+        print(f"\nSample: {sample['sample_id']} | Source: {sample['prediction_source']}")
+        print(f"Description: {sample['description']}")
+        print(f"Ground truth: {gt}\nPrediction: {pred}")
+        print(f"Ground truth area: {metrics['ground_truth_area']} | Prediction area: {metrics['prediction_area']}")
+        print(f"Intersection: {metrics['intersection_area']} | Union: {metrics['union_area']}")
+        print(f"IoU: {metrics['iou']:.9f} | Correct localization: {metrics['is_correct']} (IoU > 0.5)")
+        print(f"Result image: {output}")
     (ROOT / "outputs").mkdir(exist_ok=True)
     result_path = ROOT / "outputs/evaluation_results.json"
     result_path.write_text(json.dumps(results, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    print(f"\n评估 JSON：{result_path}")
+    print(f"\nEvaluation JSON: {result_path}")
 
 
 if __name__ == "__main__":

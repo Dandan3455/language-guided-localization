@@ -2,7 +2,7 @@
   {
     "sample_id": "desk_right_cup_001",
     "image_path": "data/downloads/desk.png",
-    "description": "找到笔记本右边的杯子。",
+    "description": "Find the cup to the right of the laptop.",
     "ground_truth_box": [
       541,
       318,

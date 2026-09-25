@@ -1,4 +1,4 @@
-"""可选：用 Pillow 重建相同示意图，不下载图片。"""
+"""Optionally recreate the synthetic scene with Pillow without downloading images."""
 
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -10,7 +10,7 @@ def main():
     font = ImageFont.load_default(size=20)
     draw.text((20, 20), "Synthetic scene: cup left of laptop", fill="#333333", font=font)
     draw.line((40, 320, 600, 320), fill="#b4a897", width=3)
-    # 杯体与杯柄的整体包围框为 [100, 170, 200, 290]。
+    # The bounding box enclosing the cup body and handle is [100, 170, 200, 290].
     draw.ellipse((158, 190, 200, 250), fill="#438fb2")
     draw.ellipse((171, 202, 189, 238), fill="#f3f0e8")
     draw.rounded_rectangle((100, 170, 177, 290), radius=12, fill="#438fb2")

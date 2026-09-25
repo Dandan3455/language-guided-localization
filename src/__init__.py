@@ -1,1 +1,1 @@
-"""语言引导目标定位：评估与可视化工具。"""
+"""Evaluation and visualization tools for language-guided object localization."""
