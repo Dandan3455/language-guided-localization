@@ -50,11 +50,11 @@ Query 是模型收到的文字，可以用 `--text` 修改；标注文件中的�
 
 1. 确认图片路径和描述。在原图上按住鼠标左键拖出矩形，框住笔记本左边的完整杯子，包含杯柄。
 2. 松开后显示原图像素坐标 `[x_min, y_min, x_max, y_max]`。可反向拖动或重新拖框；页面缩放不改变坐标含义。
-3. 点击“下载标注 JSON”，把下载的文件放到项目 `data/annotations/`。默认文件名为 `desk_left_cup_001.json`。
+3. 填写 `Sample ID`，点击 `Download annotation JSON`，把下载的 `<Sample ID>.json` 放到项目 `data/annotations/`。
 
 页面只显示原图，不显示模型预测。导出的 JSON 是样本列表，包含图片路径、描述、人工正确框、原图尺寸和 `annotation_source: "manual"`，不包含预测框。更换图片后，请确认路径确实指向项目里的对应图片。
 
-当前工具的说明和导出文件名后缀针对左侧杯子示例。标注右侧或其他目标时，还需同步修改描述、导出 JSON 的 `sample_id` 和文件名，防止不同样本覆盖或混用。下载后需手动将 JSON 放到项目目录。
+页面的 `Sample ID` 必须填写，例如左杯用 `desk_left_cup_001`，右杯用 `desk_right_cup_001`。它会同时用于 JSON 的 `sample_id` 和下载文件名，无需再手动编辑文件。编号接受英文字母、数字、下划线和连字符，最长 80 字符，以字母或数字开头，不使用 Windows 保留设备名。每个目标使用不同编号，并填写对应描述；杯子框包含杯柄、不包含碟子。下载后需手动将 JSON 放到项目目录。
 
 ### 2. 根据 query 运行真实模型
 
@@ -81,12 +81,18 @@ Query 是模型收到的文字，可以用 `--text` 修改；标注文件中的�
 将标注放到 `data/annotations/desk_left_cup_001.json`，并明确指定左侧实验的预测文件：
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py --prediction outputs/detection/desk_left/results.json
+.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py --annotation data/annotations/desk_left_cup_001.json --prediction outputs/detection/desk_left/results.json
 ```
 
-该入口按固定规则选择标签包含完整单词 `cup` 的最高分候选（同分取第一个），不使用正确框选候选。然后复用 `evaluation.py` 和 `visualization.py` 计算 IoU、生成对比图。每次评分保存到新的 `outputs/evaluation/run_<时间和随机后缀>/` 目录，终端打印完整路径，其中包含 `<sample_id>_result.png` 和 `<sample_id>_evaluation.json`。JSON 保留预测文件路径、完整标注、预测来源和选框规则。没有目标候选时记录空预测、IoU 0 和失败，不伪造框，也不生成对比图。
+该入口按固定规则选择标签包含完整单词 `cup` 的最高分候选（同分取第一个），不使用正确框选候选。然后复用 `evaluation.py` 和 `visualization.py` 计算 IoU、生成对比图。评分默认沿用预测 JSON 的实验名，保存到 `outputs/evaluation/desk_left/` 或 `desk_right/` 等目录，其中包含 `<sample_id>_result.png` 和 `<sample_id>_evaluation.json`。历史预测没有实验名时使用标注的样本编号。也可通过 `--run-name desk_right_02` 指定新名字；已有目录会被拒绝，不覆盖旧评分。JSON 保留标注和预测文件路径、完整内容、实验名及选框规则。没有目标候选时记录空预测、IoU 0 和失败，不伪造框，也不生成对比图。
 
-`--prediction` 现在为必填参数，不自动猜测最新实验。历史的 `outputs/detection/results.json` 仍可显式传入。`--annotation` 默认使用左杯标注；评估右杯时必须传入对应的右杯标注，不能沿用默认答案。`--target` 默认是 `cup`。
+`--prediction` 和 `--annotation` 均为必填参数，不猜测最新实验，也不默认使用左杯答案。`--target` 默认是 `cup`。右杯评分示例：
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 evaluate_detection.py --annotation data/annotations/desk_right_cup_001.json --prediction outputs/detection/desk_right/results.json
+```
+
+对应图片在 `outputs/evaluation/desk_right/desk_right_cup_001_result.png`。此前时间戳目录里的评分仍是历史记录，程序不会自动移动或删除它们。
 
 这是开发样本的端到端检查，不是数据集准确率，也不能证明模型理解了左右关系。当前用户标注与最高分杯子框的 IoU 约为 0.907574。
 

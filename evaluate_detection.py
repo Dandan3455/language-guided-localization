@@ -31,10 +31,12 @@ def select_candidate(candidates, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--annotation", type=Path, default=ROOT / "data/annotations/desk_left_cup_001.json")
+    parser.add_argument("--annotation", type=Path, required=True,
+                        help="Manual annotation for the target requested by this prediction")
     parser.add_argument("--prediction", type=Path, required=True,
                         help="Explicit results.json from the experiment to evaluate")
     parser.add_argument("--target", default="cup")
+    parser.add_argument("--run-name", help="Evaluation name; defaults to the prediction run name or annotation ID")
     args = parser.parse_args()
     if not args.target.strip():
         parser.error("Target must not be empty")
@@ -60,9 +62,15 @@ def main():
     metrics = evaluate_boxes(gt, selected["box"]) if selected else {
         "iou": 0.0, "is_correct": False, "criterion": "IoU > 0.5"
     }
-    output = create_run_directory(ROOT / "outputs" / "evaluation")
+    run_name = args.run_name or prediction.get("run_name") or sample["sample_id"]
+    try:
+        output = create_run_directory(ROOT / "outputs" / "evaluation", run_name)
+    except (ValueError, FileExistsError) as exc:
+        parser.error(f"{exc}. Choose a new --run-name; existing evaluations are never overwritten.")
     safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", sample["sample_id"])
     result = {
+        "run_name": output.name,
+        "annotation_file": str(args.annotation.resolve()),
         "prediction_file": str(args.prediction.resolve()),
         "annotation": sample, "prediction_run": prediction,
         "selection_rule": "highest score among labels containing target words; first on ties",
@@ -80,6 +88,8 @@ def main():
     print(f"Selected: {selected}")
     print(f"IoU: {metrics['iou']:.6f}; correct: {metrics['is_correct']}")
     print(f"Saved: {result_path}")
+    if result["visualization_path"]:
+        print(f"Image: {picture}")
 
 
 if __name__ == "__main__":
